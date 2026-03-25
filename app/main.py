@@ -1,15 +1,22 @@
+import os
+import uuid
 from datetime import date
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core.database import get_db, engine, Base
 from app.models.models import User, Food, DailyLog
 from app.schemas.schemas import UserCreate, UserRead, LogCreate, DailySummary
 from app.service.nutrition import calculate_user_targets, calculate_log_macros
+from app.service.vision import detect_food_from_image
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Makroji API")
+
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/")
 def read_root():
@@ -107,3 +114,28 @@ def get_daily_summary(user_id: int, target_date: date = None, db: Session = Depe
         remaining_carbs=user.target_carbs - consumed_carbs,
         remaining_fat=user.target_fat - consumed_fat
     )
+
+@app.post("/images/upload")
+async def upload_image(file: UploadFile = File(...)):
+    allowed_extensions = {".jpg", ".jpeg", ".png"}
+    ext = os.path.splitext(file.filename)[1].lower()
+    
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail="Only .jpg, .jpeg, and .png formats are allowed.")
+        
+    unique_filename = f"{uuid.uuid4()}{ext}"
+    file_path = os.path.join("uploads", unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+        
+    # YOLO26 (v8) ile görsel analizi
+    detected_items = detect_food_from_image(file_path)
+        
+    return {
+        "message": "Image uploaded successfully", 
+        "filename": unique_filename, 
+        "url": f"/uploads/{unique_filename}",
+        "detected_foods": detected_items
+    }
