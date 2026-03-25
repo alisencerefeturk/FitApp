@@ -20,3 +20,19 @@ class UserRead(UserCreate):
 
     class Config:
         from_attributes = True
+
+class LogCreate(BaseModel):
+    user_id: int
+    food_id: int
+    amount_grams: float
+    meal_type: str # e.g., breakfast, lunch, dinner, snack
+
+class DailySummary(BaseModel):
+    consumed_calories: float
+    consumed_protein: float
+    consumed_carbs: float
+    consumed_fat: float
+    remaining_calories: float
+    remaining_protein: float
+    remaining_carbs: float
+    remaining_fat: float

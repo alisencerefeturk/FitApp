@@ -19,3 +19,15 @@ def calculate_user_targets(age: int, gender: str, weight: float, height: float, 
     carbs = int((target_calories - (protein * 4) - (fat * 9)) / 4)
     
     return target_calories, protein, carbs, fat
+
+def calculate_log_macros(amount_grams: float, cal_100: float, pro_100: float, carb_100: float, fat_100: float):
+    """
+    Calculates the net calories and macros for a given amount of food based on its 100g values.
+    """
+    ratio = amount_grams / 100.0
+    return {
+        "calories": cal_100 * ratio,
+        "protein": pro_100 * ratio,
+        "carbs": carb_100 * ratio,
+        "fat": fat_100 * ratio
+    }
