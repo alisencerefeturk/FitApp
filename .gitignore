@@ -18,3 +18,4 @@ ENV/
 
 # Project specific
 docker-compose.yml
+dataset
